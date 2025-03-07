@@ -74,6 +74,8 @@ class Larynx_Data(Dataset):
         else:
             output["label"] = 1
         
+        number = Path(self.image_paths[path_index]).name
+        print(number)
         # add scan number for debugging
-        output["number"] = int(Path(self.image_paths[path_index]).name.split(".")[0].split('_')[1])
+        #output["number"] = int(Path(self.image_paths[path_index]).name.split(".")[0].split('_')[1])
         return output
