@@ -44,7 +44,6 @@ class Encoder(nn.Module):
         norm: Union[Tuple, str] = Norm.INSTANCE,
         dropout: Optional[Union[Tuple, str, float]] = None,
         bias: bool = True,
-        dimensions: Optional[int] = None,
     ) -> None:
         """
         Initialize the AutoEncoder.
@@ -54,7 +53,7 @@ class Encoder(nn.Module):
 
         """
         super().__init__()
-        self.dimensions = spatial_dims if dimensions is None else dimensions
+        self.dimensions = spatial_dims
         self.in_channels, *self.in_shape = in_shape
         self.out_channels = out_channels
         self.latent_size = latent_size
@@ -121,7 +120,7 @@ class Encoder(nn.Module):
                 last_conv_only=is_last,
             )
         mod = Convolution(
-            dimensions=self.dimensions,
+            spatial_dims=self.dimensions,
             in_channels=in_channels,
             out_channels=out_channels,
             strides=strides,

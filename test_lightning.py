@@ -16,7 +16,7 @@ from lightning_modules.igd import IGD
 import os
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from datasets.cq500 import CQ500
+from datasets.Larynx_Data import CQ500
 from pytorch_lightning.loggers import TensorBoardLogger
 from utils.utils import get_best_threshold, Collector
 from sklearn.metrics import average_precision_score, roc_auc_score, precision_recall_curve, confusion_matrix

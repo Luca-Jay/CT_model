@@ -2,7 +2,7 @@ import os
 from argparse import ArgumentParser
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
-from datasets.cq500_module import CQ500DataModule
+from datasets.Larynx_DataModule import Larynx_DataModule
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from lightning_modules.ae_msssim_acai import AE_MSSSIM_ACAI
 from lightning_modules.igd import IGD
@@ -24,17 +24,29 @@ def cli_main():
     parser.add_argument('--architecture',       default='IGD', choices=['AE', 'AE_MSSSIM', 'AE_MSSSIM_ACAI', 'VAE', 'VAE_MSSSIM', 'VAE_MSSSIM_ACAI', 'IGD'], type=str)
     parser.add_argument('--latent_size',        default=512, choices=[256, 512, 1024], type=int)
     parser.add_argument('--spatial_size',       default=128, choices=[64, 128], type=int)
-    parser.add_argument('--stripped',           default=False, type=bool)
     parser.add_argument('--gpu',                default=1, type=int)
     parser.add_argument('--dataset_dir',        default='.', type=str)
     parser.add_argument('--output_dir',         default='.', type=str)
 
-    parser = pl.Trainer.add_argparse_args(parser)
-    args = parser.parse_args() 
+    # parser = pl.Trainer.add_argparse_args(parser)
+    # args = parser.parse_args()
+    class Args:
+        pass
+    args = Args()
+
+    # Hardcoded arguments for testing
+    args.batch_size = 4
+    args.epochs = 10
+    args.architecture = 'AE'
+    args.latent_size = 256
+    args.spatial_size = 128
+    args.gpu = 1
+    args.dataset_dir = 'DATA'
+    args.output_dir = 'OUTPUT'
 
     # data
-    cq500_root = args.dataset_dir
-    datamodule = CQ500DataModule(data_dir=cq500_root, stripped=args.stripped, batch_size=args.batch_size, spatial_size=args.spatial_size)
+    dataset_root = args.dataset_dir
+    datamodule = Larynx_DataModule(data_dir=dataset_root, batch_size=args.batch_size, spatial_size=args.spatial_size)
 
     rho = 0.15
     lambda_fool = 0.1
@@ -64,7 +76,7 @@ def cli_main():
 
     # choose gpu and logger
     gpus = [args.gpu]
-    experiment_name = args.architecture if not args.stripped else args.architecture + "-stripped"
+    experiment_name = args.architecture
     root_log_dir = os.path.join(args.output_dir, experiment_name)
     train_logger = TensorBoardLogger(save_dir=root_log_dir, name="pretraining")
     
@@ -77,15 +89,18 @@ def cli_main():
         every_n_epochs=10,
     )
 
+    args.accelerator = 'cpu'
+    args.devices = None
+    
     # create trainer object
-    trainer = pl.Trainer.from_argparse_args(args, 
-                                            gpus=gpus,
-                                            logger=train_logger, 
-                                            fast_dev_run=False,
-                                            num_sanity_val_steps=0,
-                                            log_every_n_steps=20,
-                                            callbacks=[checkpoint_callback],
-                                            max_epochs=args.epochs)
+    trainer = pl.Trainer(accelerator=args.accelerator,
+                            devices=args.gpu, 
+                            logger=train_logger, 
+                            fast_dev_run=False,
+                            num_sanity_val_steps=0,
+                            log_every_n_steps=20,
+                            callbacks=[checkpoint_callback],
+                            max_epochs=args.epochs)
     trainer.fit(model, datamodule)
 
 
