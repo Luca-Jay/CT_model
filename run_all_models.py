@@ -22,12 +22,12 @@ def num_gpus():
 def main():
     # architectures = ['AE', 'VAE', 'AE_MSSSIM', 'VAE_MSSSIM', 'AE_MSSSIM_ACAI', 'VAE_MSSSIM_ACAI', 'IGD']
     architectures = ['AE']
-    batch_size = 2
+    batch_size = 1
     epochs = 100
     latent_size = 512
     spatial_size = 128
-    accelerator = 'gpu' if num_gpus() > 1 else 'cpu'
-    devices = num_gpus() if num_gpus() > 1 else 1
+    accelerator = 'gpu' if num_gpus() > 0 else 'cpu'
+    devices = num_gpus() if num_gpus() > 0 else 1
     dataset_dir = 'DATA'
     output_dir = 'OUTPUT'
     mean_map = False

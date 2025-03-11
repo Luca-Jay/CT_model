@@ -67,8 +67,7 @@ def train_model(batch_size, epochs, architecture, latent_size, spatial_size, acc
                             num_sanity_val_steps=0,
                             log_every_n_steps=20,
                             callbacks=[checkpoint_callback],
-                            max_epochs=epochs,
-                            overfit_batches=1)
+                            max_epochs=epochs)
     trainer.fit(model, datamodule)
 
 # entry point

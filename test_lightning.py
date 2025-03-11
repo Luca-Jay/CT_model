@@ -76,7 +76,7 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
     for disease, dataset in abnormal_datasets.items():
 
         # initialize the containers for predictions and targets
-        if accelerator is 'gpu':
+        if accelerator == 'gpu':
             model = model.cuda(device=torch.device('cuda:' + str(devices)))
         model.codes = Collector(500)
         model.rec_preds = Collector(500)
