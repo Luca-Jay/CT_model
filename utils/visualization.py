@@ -13,14 +13,25 @@ def viz_training(x, x_hat, epoch, indexes, logger):
     index50 = int(input_shape[2] / 2)
     index66 = int((2 * input_shape[2]) / 3)
     
-    grid = torchvision.utils.make_grid([x[0, ..., index33], x_hat[0, ..., index33],
-                                        x[1, ..., index33], x_hat[1, ..., index33],                       
-                                        x[0, ..., index50], x_hat[0, ..., index50],
-                                        x[1, ..., index50], x_hat[1, ..., index50],                       
-                                        x[0, ..., index66], x_hat[0, ..., index66],
-                                        x[1, ..., index66], x_hat[1, ..., index66]], nrow=4)
-    recon_tag = "".join(["Input & Rec. at 3 levels/Scans:[", str(indexes[0].item()), ", ", str(indexes[1].item()), "], epoch:", str(epoch), ])
-    logger.add_image(recon_tag, grid)
+    if x.shape[0] < 2:
+        # Handle case where batch size is less than 2
+        grid = torchvision.utils.make_grid([x[0, ..., index33], x_hat[0, ..., index33],
+                                            x[0, ..., index50], x_hat[0, ..., index50],
+                                            x[0, ..., index66], x_hat[0, ..., index66]], nrow=2)
+        # recon_tag = "".join(["Input & Rec. at 3 levels/Scan:", str(indexes[0].item()), "], epoch:", str(epoch)])
+        recon_tag = "".join(["Input & Rec. at 3 levels/Scan:", str(indexes[0].item())])
+
+    else:
+        grid = torchvision.utils.make_grid([x[0, ..., index33], x_hat[0, ..., index33],
+                                            x[1, ..., index33], x_hat[1, ..., index33],                       
+                                            x[0, ..., index50], x_hat[0, ..., index50],
+                                            x[1, ..., index50], x_hat[1, ..., index50],                       
+                                            x[0, ..., index66], x_hat[0, ..., index66],
+                                            x[1, ..., index66], x_hat[1, ..., index66]], nrow=4)
+        # recon_tag = "".join(["Input & Rec. at 3 levels/Scans:[", str(indexes[0].item()), ", ", str(indexes[1].item()), "], epoch:", str(epoch)])
+        recon_tag = "".join(["Input & Rec. at 3 levels/Scans:[", str(indexes[0].item()), ", ", str(indexes[1].item()), "]"])
+   
+    logger.add_image(recon_tag, grid, global_step=epoch)
 
 
 def viz_interpolation(x, x_hat, z_alpha_hat, alpha, epoch, indexes, logger):
@@ -105,7 +116,8 @@ def viz_testing_gif(x, input_type, indexes, rec_score, feat_score, thr_rec, thr_
     
     gif_tag = "".join([input_type, "GIF/Scan:", str(indexes.item()), ", Rec:", rec_outcome, ", Feat:", feat_outcome])
 
-    add_animated_gif(logger, gif_tag, x.cpu(), max_out=128, scale_factor=255)
+    # Specify the axis for the animated GIF
+    add_animated_gif(logger, gif_tag, x.cpu(), max_out=126, scale_factor=255, frame_dim=-1)
 
 
 def viz_testing(x, x_hat, residual, input_type, indexes, rec_score, feat_score, thr_rec, thr_feat, label, logger):

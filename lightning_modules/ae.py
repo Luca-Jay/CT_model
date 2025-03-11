@@ -111,17 +111,25 @@ class AE(pl.LightningModule):
         # average to get loss
         loss = torch.mean(residual)
         
+        num_batches = max(1, int(len(self.trainer.train_dataloader)))  # Avoid division by zero
+
         # update GSVDD
-        if batch_idx % int(len(self.trainer.train_dataloader) / 2) == 0 and batch_idx != 0:
+        if batch_idx % num_batches // 2 == 0 and batch_idx != 0:
             self.sigma = self.init_sigma()
             self.c = self.init_c()
         
         # visualization
         with torch.no_grad():
-            if batch_idx % 30 == 0 and self.global_rank == 0 and self.current_epoch % 10 == 0:
+            if self.global_rank == 0:
                 viz_training(originals, reconstructions, self.current_epoch, batch["number"], self.logger.experiment)
             self.training_losses["l1"].append(loss)
         return loss
+        # # visualization
+        # with torch.no_grad():
+        #     if batch_idx % 2 == 0 and self.global_rank == 0 and self.current_epoch % 10 == 0:
+        #         viz_training(originals, reconstructions, self.current_epoch, batch["number"], self.logger.experiment)
+        #     self.training_losses["l1"].append(loss)
+        # return loss
 
 
     def validation_step(self, batch, batch_idx):
@@ -137,7 +145,7 @@ class AE(pl.LightningModule):
         self.validation_losses["l1"].append(loss)
 
 
-    def test_step(self, batch, batch_idx, dataset_idx):
+    def test_step(self, batch, batch_idx, dataloader_idx=0):
         # get reconstructions, codes, residuals
         originals = batch["image"]
         labels = batch["label"]
@@ -164,10 +172,10 @@ class AE(pl.LightningModule):
             # visualize if necessary
             if self.visualize_testing:
                 # discriminate dataset
-                if dataset_idx == 0:
-                    input_type = 'Healthy'
+                if dataloader_idx == 0:
+                    input_type = 'Normal'
                 else:
-                    input_type = 'Unhealthy'
+                    input_type = 'Abnormal'
                 
                 viz_testing(originals[visual_index], reconstructions[visual_index], residual, input_type, batch['number'][visual_index],
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)

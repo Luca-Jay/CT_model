@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 from utils.utils import window
 from torch.utils.data import Dataset
-from monai.transforms import IdentityD, Compose, ResizeD, ScaleIntensityD, LoadImageD, EnsureChannelFirstd
+from monai.transforms import IdentityD, Compose, ResizeD, ScaleIntensityD, LoadImageD, EnsureChannelFirstd, RandFlipD, RandRotate
+import numpy as np
 
 
 class Larynx_Data(Dataset):
@@ -16,8 +17,12 @@ class Larynx_Data(Dataset):
             folder = "VAL"
         elif mode == "test-normal":
             folder = os.path.join("TEST", "NORMAL")
-        elif mode == "test-abnormal":
-            folder = os.path.join("TEST", "ABNORMAL")
+        elif mode == "test-fracture":
+            folder = os.path.join("TEST", "FRACTURE")
+        elif mode == "test-hemorrhage":
+            folder = os.path.join("TEST", "HEMORRHAGE")
+        elif mode == "test-synthetic":
+            folder = os.path.join("TEST", "CUBE")
         else:
             raise NameError("The specified dataset mode is not expected. Specify either train, val or test")
 
@@ -27,7 +32,6 @@ class Larynx_Data(Dataset):
         self.spatial_size = spatial_size
         
         # save the augmentation functions, with identity in position 0
-        # SO FAR NO AUGMENTATIONS
         self.augmentations = [IdentityD(keys=["image"])]
         if augmentations is not None:
             self.augmentations.extend(augmentations)
@@ -68,14 +72,17 @@ class Larynx_Data(Dataset):
             ]
         )
         output = resizing(data)
+
+        # apply augmentation if needed
+        if augmentation_type > 0 and self.mode=='train':
+            augmentation = self.augmentations[augmentation_type]
+            output = augmentation(output)
         
-        if "HEALTHY" in self.image_paths[index]:
+        if "NORMAL" in self.image_paths[path_index]:
             output["label"] = 0
         else:
             output["label"] = 1
         
-        number = Path(self.image_paths[path_index]).name
-        print(number)
         # add scan number for debugging
-        #output["number"] = int(Path(self.image_paths[path_index]).name.split(".")[0].split('_')[1])
+        output["number"] = int(Path(self.image_paths[path_index]).name.split("-")[1].split('_')[0])
         return output
