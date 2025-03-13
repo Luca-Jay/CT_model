@@ -2,7 +2,7 @@ from typing import Optional
 import pytorch_lightning as pl
 from torch.utils.data import random_split, DataLoader
 
-from datasets.larynx_data import Larynx_Data
+from datasets.Larynx_Data import Larynx_Data
 
 
 class Larynx_DataModule(pl.LightningDataModule):

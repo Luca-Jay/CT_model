@@ -2,3 +2,4 @@
 DATA/
 OUTPUT/
 test.py
+**/__pycache__/

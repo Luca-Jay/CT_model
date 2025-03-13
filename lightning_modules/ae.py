@@ -3,7 +3,7 @@ import torch
 from torch.nn import functional as F
 from components import Encoder, Decoder
 from utils.utils import log_average
-from utils.visualization import viz_testing, viz_testing_gif, viz_training
+from utils.visualization import viz_training, viz_testing_gif, viz_testing, viz_residual_heatmap, viz_residual_heatmap_gif
 
 
 class AE(pl.LightningModule):
@@ -181,6 +181,9 @@ class AE(pl.LightningModule):
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)
                 viz_testing_gif(residual, input_type + ' residual', batch["number"][visual_index], 
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)
+                # Call new visualization functions
+                viz_residual_heatmap(originals[visual_index], residual, batch['number'][visual_index], self.logger.experiment)
+                viz_residual_heatmap_gif(originals[visual_index], residual, batch['number'][visual_index], self.logger.experiment)
     ### END OF LIGHTNING STEPS ###
 
     ### OPTIMIZERS AND LOGGING ###

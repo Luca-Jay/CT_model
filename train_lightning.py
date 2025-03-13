@@ -2,7 +2,7 @@ import os
 from argparse import ArgumentParser
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
-from datasets.larynx_data_module import Larynx_DataModule
+from datasets.Larynx_Data_Module import Larynx_DataModule
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from lightning_modules.ae_msssim_acai import AE_MSSSIM_ACAI
 from lightning_modules.igd import IGD

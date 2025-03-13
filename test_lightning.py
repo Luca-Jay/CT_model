@@ -16,7 +16,7 @@ from lightning_modules.igd import IGD
 import os
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from datasets.larynx_data import Larynx_Data
+from datasets.Larynx_Data import Larynx_Data
 from pytorch_lightning.loggers import TensorBoardLogger
 from utils.utils import get_best_threshold, Collector
 from sklearn.metrics import average_precision_score, roc_auc_score, precision_recall_curve, confusion_matrix
@@ -35,7 +35,9 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
     dataset_HEM = Larynx_Data(root=data_dir, mode="test-hemorrhage")
     dataset_FRAC = Larynx_Data(root=data_dir, mode="test-fracture")
     dataset_SYN = Larynx_Data(root=data_dir, mode="test-synthetic")
-    abnormal_datasets = {"SYN": dataset_SYN}
+    abnormal_datasets = {"SYN": dataset_SYN, 
+                         "HEM": dataset_HEM, 
+                         "FRAC": dataset_FRAC}
 
     train_dataset = Larynx_Data(root=data_dir, mode='train')
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
@@ -215,11 +217,12 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
 if __name__ == '__main__':
     # Hardcoded arguments for testing
     batch_size = 2
-    checkpoint = 'OUTPUT\AE\checkpoints\epoch=199.ckpt'
+    checkpoint = 'OUTPUT\AE\checkpoints\epoch=69.ckpt'
     architecture = 'AE'
     mean_map = False
     accelerator = 'cpu'
-    devices = None
+    devices = 1
     dataset_dir = 'DATA'
+    latent_size = 512
 
-    test_model(batch_size, checkpoint, architecture, mean_map, accelerator, devices, dataset_dir)
+    test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size)

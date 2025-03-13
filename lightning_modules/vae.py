@@ -2,7 +2,7 @@ from typing import Any
 import pytorch_lightning as pl
 from components import EncoderVAE, Decoder
 import torch
-from utils.visualization import viz_training, viz_testing_gif, viz_testing
+from utils.visualization import viz_training, viz_testing_gif, viz_testing, viz_residual_heatmap, viz_residual_heatmap_gif
 from torch.nn import functional as F
 from utils.utils import log_average
 
@@ -209,6 +209,9 @@ class VAE(pl.LightningModule):
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)
                 viz_testing_gif(residual, input_type + ' residual', batch["number"][visual_index], 
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)
+                # Call heatmap visualization functions
+                viz_residual_heatmap(originals[visual_index], residual, batch['number'][visual_index], self.logger.experiment)
+                viz_residual_heatmap_gif(originals[visual_index], residual, batch['number'][visual_index], self.logger.experiment)
     ### END OF LIGHTNING STEPS ###
     
 

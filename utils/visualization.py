@@ -188,4 +188,36 @@ def viz_confusion_matrix(matrix, tag, logger):
     
     logger.add_figure(tag, fig)
 
+def viz_residual_heatmap(x, residual, indexes, logger):
+    # visualize residual as heatmap overlay on original image at three axial levels
+    input_shape = x.shape
+    index33 = int(input_shape[2] / 3)
+    index50 = int(input_shape[2] / 2)
+    index66 = int((2 * input_shape[2]) / 3)
+
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    for ax, idx in zip(axes, [index33, index50, index66]):
+        ax.imshow(x[0, :, :, idx].cpu().numpy(), cmap='gray')
+        ax.imshow(residual[0, :, :, idx].cpu().numpy(), cmap='hot', alpha=0.5)
+        ax.axis('off')
+
+    heatmap_tag = "".join(["Heatmap Overlay/Scan:", str(indexes.item())])
+    logger.add_figure(heatmap_tag, fig)
+
+def viz_residual_heatmap_gif(x, residual, indexes, logger):
+    # create a GIF of residual heatmap overlay on original image through the axial dimension
+    frames = []
+    for i in range(x.shape[3]):
+        fig, ax = plt.subplots(figsize=(5, 5))
+        ax.imshow(x[0, :, :, i].cpu().numpy(), cmap='gray')
+        ax.imshow(residual[0, :, :, i].cpu().numpy(), cmap='hot', alpha=0.5)
+        ax.axis('off')
+        fig.canvas.draw()
+        frame = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8').reshape(fig.canvas.get_width_height()[::-1] + (3,))
+        frames.append(frame)
+        plt.close(fig)
+
+    gif_tag = "".join(["Heatmap Overlay GIF/Scan:", str(indexes.item())])
+    add_animated_gif(logger, gif_tag, torch.tensor(frames).permute(0, 3, 1, 2), max_out=len(frames), scale_factor=1, frame_dim=0)
+
 

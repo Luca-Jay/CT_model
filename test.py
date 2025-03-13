@@ -1,4 +1,4 @@
-from datasets.larynx_data import Larynx_Data
+from datasets.Larynx_Data import Larynx_Data
 from monai.transforms import IdentityD, Compose, ResizeD, ScaleIntensityD, LoadImageD, EnsureChannelFirstd, RandFlipD, RandRotate
 import numpy as np
 
