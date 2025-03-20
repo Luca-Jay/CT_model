@@ -21,6 +21,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from utils.utils import get_best_threshold, Collector
 from sklearn.metrics import average_precision_score, roc_auc_score, precision_recall_curve, confusion_matrix
 from utils.visualization import viz_pr_curve, viz_confusion_matrix
+from utils.generate_residual_maps import generate_residual_maps
 
 def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size):
     pl.seed_everything(42, workers=True)
@@ -207,6 +208,8 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
     logger.experiment.add_figure(tag='Violin for F score, count', figure=ax.get_figure())
     ax = sns.violinplot(x='C score', y='Abnormality', data=avg_score_df, density_norm='count')
     logger.experiment.add_figure(tag='Violin for C score, count', figure=ax.get_figure())
+
+    generate_residual_maps(data_dir, os.path.join(output_dir, "RESIDUALS"), checkpoint)
 
     # get output filename for metrics xlsx
     output_filename = architecture + "-average_scores.xlsx"

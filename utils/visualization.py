@@ -218,6 +218,6 @@ def viz_residual_heatmap_gif(x, residual, indexes, logger):
         plt.close(fig)
 
     gif_tag = "".join(["Heatmap Overlay GIF/Scan:", str(indexes.item())])
-    add_animated_gif(logger, gif_tag, torch.tensor(frames).permute(0, 3, 1, 2), max_out=len(frames), scale_factor=1, frame_dim=0)
+    add_animated_gif(logger, gif_tag, torch.tensor(np.array(frames)).permute(0, 3, 1, 2), max_out=len(frames), scale_factor=1, frame_dim=0)
 
 
