@@ -14,7 +14,7 @@ def log_timing(msg):
 
 class Larynx_Data(Dataset):
 
-    def __init__(self, root, mode="train", augmentations=None, spatial_size=128):
+    def __init__(self, root, mode="train", augmentations=None, spatial_size=128, hu_values=None):
         # get the correct root paths
         self.mode = mode
         if mode == "train":
@@ -36,6 +36,7 @@ class Larynx_Data(Dataset):
 
         # save specifics
         self.spatial_size = spatial_size
+        self.hu_values = hu_values if hu_values else [(None, None), (0, 500), (200, 800)]
         
         # save the augmentation functions, with identity in position 0
         self.augmentations = [IdentityD(keys=["image"])]
@@ -56,12 +57,18 @@ class Larynx_Data(Dataset):
         self.images = []
 
         for name in image_names:
+            path = os.path.join(images_root, name)
+            self.image_paths.append(path)
+            img = nib.load(path).get_fdata().astype(np.float32)
+            channels = []
+            for hu_min, hu_max in self.hu_values:
+                clamped_img = window(img, hu_min, hu_max) if hu_min is not None and hu_max is not None else img
+                normalized_img = (clamped_img - clamped_img.min()) / (clamped_img.max() - clamped_img.min())
+                channels.append(normalized_img)
+            stacked_img = np.stack(channels, axis=0)  # Stack channels
+            data = {"image": stacked_img}
+            resized = self.resizing(data)
             for aug in self.augmentations:
-                path = os.path.join(images_root, name)
-                self.image_paths.append(path)
-                img = nib.load(path).get_fdata().astype(np.float32)
-                data = {"image": img[np.newaxis, ...]}
-                resized = self.resizing(data)
                 augmented = aug(resized)
                 self.images.append(augmented)
 

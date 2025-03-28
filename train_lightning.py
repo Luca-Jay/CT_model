@@ -13,12 +13,12 @@ from lightning_modules.ae_msssim import AE_MSSSIM
 from lightning_modules.vae_msssim import VAE_MSSSIM
 from datetime import datetime
 
-def train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmentations=None):
+def train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmentations=None, hu_values=None):
     pl.seed_everything(42, workers=True)
 
     # data
     dataset_root = dataset_dir
-    datamodule = Larynx_DataModule(data_dir=dataset_root, batch_size=batch_size, spatial_size=spatial_size, augmentations=augmentations)
+    datamodule = Larynx_DataModule(data_dir=dataset_root, batch_size=batch_size, spatial_size=spatial_size, augmentations=augmentations, hu_values=hu_values)
 
     rho = 0.15
     lambda_fool = 0.1

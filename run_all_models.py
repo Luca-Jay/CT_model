@@ -76,15 +76,17 @@ def main():
         intensity = random.choice(intensity_aug)
         precomputed_augmentations.append(Compose([spatial, intensity]))
 
+    hu_values = [(None, None), (0, 500), (200, 800)]  # Default HU ranges for channels
+
     for architecture in architectures:
         print(f"Training {architecture} model...")
-        train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, precomputed_augmentations)
+        train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, precomputed_augmentations, hu_values)
         
         checkpoint_dir = os.path.join(output_dir, architecture, 'checkpoints')
         checkpoint = get_latest_checkpoint(checkpoint_dir)
         
         print(f"Testing {architecture} model with checkpoint {checkpoint}...")
-        test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size)
+        test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size, hu_values)
 
 if __name__ == '__main__':
     main()
