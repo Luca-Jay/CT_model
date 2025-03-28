@@ -5,6 +5,11 @@ from components import Encoder, Decoder
 from utils.utils import log_average
 from utils.visualization import viz_training, viz_testing_gif, viz_testing, viz_residual_heatmap, viz_residual_heatmap_gif
 
+import time
+
+def log_timing(msg):
+    print(f"[{time.strftime('%H:%M:%S')}] {msg}")
+
 
 class AE(pl.LightningModule):
 
@@ -54,6 +59,16 @@ class AE(pl.LightningModule):
     def on_load_checkpoint(self, checkpoint) -> None:
         self.c = checkpoint['c']
         self.sigma = checkpoint['sigma']
+
+    def on_train_epoch_end(self):
+        self.c = self.init_c()
+        self.sigma = self.init_sigma()
+        if self.current_epoch % 2 == 0 and self.global_rank == 0:
+            batch = next(iter(self.trainer.train_dataloader))  # First batch only
+            originals = batch["image"].to(self.device)
+            with torch.no_grad():
+                reconstructions, _ = self(originals)
+            viz_training(originals, reconstructions, self.current_epoch, batch["number"], self.logger.experiment)
 
     def init_c(self, eps=0.1):
         # generator.c = None
@@ -113,23 +128,10 @@ class AE(pl.LightningModule):
         
         num_batches = max(1, int(len(self.trainer.train_dataloader)))  # Avoid division by zero
 
-        # update GSVDD
-        if batch_idx % num_batches // 2 == 0 and batch_idx != 0:
-            self.sigma = self.init_sigma()
-            self.c = self.init_c()
-        
-        # visualization
         with torch.no_grad():
-            if self.global_rank == 0:
-                viz_training(originals, reconstructions, self.current_epoch, batch["number"], self.logger.experiment)
             self.training_losses["l1"].append(loss)
+
         return loss
-        # # visualization
-        # with torch.no_grad():
-        #     if batch_idx % 2 == 0 and self.global_rank == 0 and self.current_epoch % 10 == 0:
-        #         viz_training(originals, reconstructions, self.current_epoch, batch["number"], self.logger.experiment)
-        #     self.training_losses["l1"].append(loss)
-        # return loss
 
 
     def validation_step(self, batch, batch_idx):
@@ -183,7 +185,7 @@ class AE(pl.LightningModule):
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)
                 # Call new visualization functions
                 viz_residual_heatmap(originals[visual_index], residual, batch['number'][visual_index], self.logger.experiment)
-                viz_residual_heatmap_gif(originals[visual_index], residual, batch['number'][visual_index], self.logger.experiment)
+                #viz_residual_heatmap_gif(originals[visual_index], residual, batch['number'][visual_index], self.logger.experiment)
     ### END OF LIGHTNING STEPS ###
 
     ### OPTIMIZERS AND LOGGING ###

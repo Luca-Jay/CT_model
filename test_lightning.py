@@ -33,12 +33,11 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
     # data
     data_dir = dataset_dir
     dataset_normal = Larynx_Data(root=data_dir, mode="test-normal")
-    dataset_HEM = Larynx_Data(root=data_dir, mode="test-hemorrhage")
-    dataset_FRAC = Larynx_Data(root=data_dir, mode="test-fracture")
+    dataset_STR = Larynx_Data(root=data_dir, mode="test-strangulation")
     dataset_SYN = Larynx_Data(root=data_dir, mode="test-synthetic")
     abnormal_datasets = {"SYN": dataset_SYN, 
-                         "HEM": dataset_HEM, 
-                         "FRAC": dataset_FRAC}
+                         "STR": dataset_STR
+                         }
 
     train_dataset = Larynx_Data(root=data_dir, mode='train')
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
@@ -219,13 +218,13 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
 
 if __name__ == '__main__':
     # Hardcoded arguments for testing
-    batch_size = 2
-    checkpoint = 'OUTPUT\AE\checkpoints\epoch=69.ckpt'
+    batch_size = 8
+    checkpoint = '/workspace/project-data/CT_model/OUTPUT/AE/checkpoints/epoch=19-v1.ckpt'
     architecture = 'AE'
     mean_map = False
     accelerator = 'cpu'
     devices = 1
-    dataset_dir = 'DATA'
-    latent_size = 512
+    dataset_dir = '/workspace/project-data/CT_model/DATA'
+    latent_size = 1024
 
     test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size)

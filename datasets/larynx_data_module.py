@@ -21,9 +21,7 @@ class Larynx_DataModule(pl.LightningDataModule):
             self.dataset_val = Larynx_Data(root=self.data_dir, mode="val", spatial_size=self.spatial_size, augmentations=self.augmentations)
         
     def train_dataloader(self):
-        return DataLoader(self.dataset_train, shuffle=True, batch_size=self.batch_size, pin_memory=True, num_workers=0)
-        # return DataLoader(self.dataset_train, shuffle=True, batch_size=self.batch_size, pin_memory=True, num_workers=4)
+        return DataLoader(self.dataset_train, shuffle=True, batch_size=self.batch_size, pin_memory=True, num_workers=8, persistent_workers=True, prefetch_factor=2)
 
     def val_dataloader(self):
-        return DataLoader(self.dataset_val, shuffle=False, batch_size=self.batch_size, pin_memory=True, num_workers=0)
-        #        return DataLoader(self.dataset_val, shuffle=False, batch_size=self.batch_size, pin_memory=True, num_workers=4)
+        return DataLoader(self.dataset_val, shuffle=False, batch_size=self.batch_size, pin_memory=True, num_workers=8, persistent_workers=True, prefetch_factor=2)

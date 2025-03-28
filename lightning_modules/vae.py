@@ -201,9 +201,9 @@ class VAE(pl.LightningModule):
             if self.visualize_testing:
                 # discriminate dataset
                 if dataset_idx == 0:
-                    input_type = 'Healthy'
+                    input_type = 'Normal'
                 else:
-                    input_type = 'Unhealthy'
+                    input_type = 'Abnormal'
                 
                 viz_testing(originals[visual_index], reconstructions[visual_index], residual, input_type, batch['number'][visual_index],
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)

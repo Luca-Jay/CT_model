@@ -8,9 +8,9 @@ from pathlib import Path
 random.seed(42)
 
 # Define the paths
-data_dir = '../CT_preprocessing/PREPROCESSED_CT_SCANS'
-output_dir = 'DATA'
-decedentsfile = 'decedents.csv'
+data_dir = '/workspace/project-data/PREPROCESSED_CT_SCANS/CLIPPED(-1000-1000)/TIGHT'
+output_dir = '/workspace/project-data/CT_model/DATA/TIGHT'
+decedentsfile = '/workspace/project-data/CT_model/decedents.csv'
 train_ratio = 0.7
 val_ratio = 0.15
 test_ratio = 0.15
@@ -64,17 +64,21 @@ test_files = natural_files[train_split + val_split:]
 
 # Copy files to respective directories
 for file in train_files:
-    shutil.copy(os.path.join(data_dir, file), os.path.join(train_dir, file))
+    if not(os.path.exists(os.path.join(train_dir, file))):
+        shutil.copy(os.path.join(data_dir, file), os.path.join(train_dir, file))
 
 for file in val_files:
-    shutil.copy(os.path.join(data_dir, file), os.path.join(val_dir, file))
+    if not(os.path.exists(os.path.join(val_dir, file))):
+        shutil.copy(os.path.join(data_dir, file), os.path.join(val_dir, file))
 
 for file in test_files:
-    shutil.copy(os.path.join(data_dir, file), os.path.join(test_dir, file))
+    if not(os.path.exists(os.path.join(test_dir, file))):
+        shutil.copy(os.path.join(data_dir, file), os.path.join(test_dir, file))
 
 for file in strangulation_files:
     new_filename = file.replace('.nii.gz', '_STR.nii.gz')
-    shutil.copy(os.path.join(data_dir, file), os.path.join(strangulation_test_dir, new_filename))
+    if not(os.path.exists(os.path.join(strangulation_test_dir, new_filename))):
+        shutil.copy(os.path.join(data_dir, file), os.path.join(strangulation_test_dir, new_filename))
 
 print(f"Training files: {len(train_files)}")
 print(f"Validation files: {len(val_files)}")
