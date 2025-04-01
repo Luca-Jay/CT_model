@@ -8,7 +8,7 @@ from pathlib import Path
 random.seed(42)
 
 # Define the paths
-data_dir = '/workspace/project-data/PREPROCESSED_CT_SCANS/CLIPPED(-1000-1000)/TIGHT'
+data_dir = '/workspace/project-data/PREPROCESSED_CT_SCANS/TIGHT'
 output_dir = '/workspace/project-data/CT_model/DATA/TIGHT'
 decedentsfile = '/workspace/project-data/CT_model/decedents.csv'
 train_ratio = 0.7

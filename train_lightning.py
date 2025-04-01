@@ -13,12 +13,12 @@ from lightning_modules.ae_msssim import AE_MSSSIM
 from lightning_modules.vae_msssim import VAE_MSSSIM
 from datetime import datetime
 
-def train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmentations=None, hu_values=None):
+def train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmentations=None, clipping_values=None):
     pl.seed_everything(42, workers=True)
 
     # data
     dataset_root = dataset_dir
-    datamodule = Larynx_DataModule(data_dir=dataset_root, batch_size=batch_size, spatial_size=spatial_size, augmentations=augmentations, hu_values=hu_values)
+    datamodule = Larynx_DataModule(data_dir=dataset_root, batch_size=batch_size, spatial_size=spatial_size, augmentations=augmentations, clipping_values=clipping_values)
 
     rho = 0.15
     lambda_fool = 0.1
@@ -50,7 +50,7 @@ def train_model(batch_size, epochs, architecture, latent_size, spatial_size, acc
     experiment_name = architecture
     root_log_dir = os.path.join(output_dir, experiment_name)
     now = datetime.now().strftime("%m-%d %H:%M")
-    version_name = f"{now} - BS:{batch_size}, EP: {epochs}, LS:{latent_size}, AUG: {len(augmentations)>0}"
+    version_name = f"{now} - BS:{batch_size}, EP: {epochs}, LS:{latent_size}, AUG: {len(augmentations)}, CV: {clipping_values}"
     train_logger = TensorBoardLogger(save_dir=root_log_dir, name="pretraining", version=version_name)
     
     # create checkpoint callback
@@ -59,7 +59,7 @@ def train_model(batch_size, epochs, architecture, latent_size, spatial_size, acc
         dirpath=checkpoint_dir,
         filename="{epoch:02d}",
         save_last=False,
-        every_n_epochs=10
+        every_n_epochs=20
     )
     
     # create trainer object
@@ -69,8 +69,9 @@ def train_model(batch_size, epochs, architecture, latent_size, spatial_size, acc
                             fast_dev_run=False,
                             num_sanity_val_steps=0,
                             log_every_n_steps=20,
-                            callbacks=[checkpoint_callback],
-                            max_epochs=epochs
+                            #callbacks=[checkpoint_callback],
+                            max_epochs=epochs,
+                            enable_checkpointing=False
                         )
     trainer.fit(model, datamodule)
 

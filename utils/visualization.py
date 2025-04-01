@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 from monai.visualize.img2tensorboard import add_animated_gif
 from utils.utils import get_classification_outcome
 
+import torchvision
+
+import torchvision
+
 def viz_training(x, x_hat, epoch, indexes, logger):
     # three levels indices
     input_shape = x.shape
@@ -32,6 +36,8 @@ def viz_training(x, x_hat, epoch, indexes, logger):
         recon_tag = "".join(["Input & Rec. at 3 levels/Scans:[", str(indexes[0].item()), ", ", str(indexes[1].item()), "]"])
    
     logger.add_image(recon_tag, grid, global_step=epoch)
+
+
 
 
 def viz_interpolation(x, x_hat, z_alpha_hat, alpha, epoch, indexes, logger):

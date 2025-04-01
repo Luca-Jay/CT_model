@@ -35,9 +35,9 @@ def num_gpus():
 
 def main():
     # architectures = ['AE', 'VAE', 'AE_MSSSIM', 'VAE_MSSSIM', 'AE_MSSSIM_ACAI', 'VAE_MSSSIM_ACAI', 'IGD']
-    architectures = ['AE']
-    batch_size = 2
-    epochs = 100
+    architectures = ['VAE_MSSSIM']
+    batch_size = 4
+    epochs = 20
     latent_size = 1024
     spatial_size = 128
     accelerator = 'gpu' if num_gpus() > 0 else 'cpu'
@@ -47,13 +47,10 @@ def main():
     mean_map = False
 
     # Number of randomized augmentations per image
-    N = 4
-
-    # Identity for original image
-    precomputed_augmentations = [IdentityD(keys=["image"])]
+    number_of_augmentations = [2]
 
     # Define spatial & intensity options
-    spatial_aug = [
+    augmenations = [
         RandFlipD(keys=["image"], spatial_axis=0, prob=1.0),
         RandRotateD(keys=["image"], range_x=0.1, prob=1.0),
         RandZoomD(keys=["image"], min_zoom=0.9, max_zoom=1.1, prob=1.0),
@@ -69,24 +66,25 @@ def main():
         RandHistogramShiftD(keys=["image"], prob=1.0),
     ]
 
-    # Compose N randomized augmentation pipelines
     
-    for _ in range(N):
-        spatial = random.choice(spatial_aug)
-        intensity = random.choice(intensity_aug)
-        precomputed_augmentations.append(Compose([spatial, intensity]))
 
-    hu_values = [(None, None), (0, 500), (200, 800)]  # Default HU ranges for channels
+    clipping_values = [(300 , 1500)]  # Default HU ranges for channels , (500 , 2000), (50, 400)
 
     for architecture in architectures:
-        print(f"Training {architecture} model...")
-        train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, precomputed_augmentations, hu_values)
-        
-        checkpoint_dir = os.path.join(output_dir, architecture, 'checkpoints')
-        checkpoint = get_latest_checkpoint(checkpoint_dir)
-        
-        print(f"Testing {architecture} model with checkpoint {checkpoint}...")
-        test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size, hu_values)
+        # Compose N randomized augmentation pipelines
+        for N in number_of_augmentations:
+            for n in range(N):
+                intensity = intensity_aug[n]
+                augmenations.append(intensity)
+            for clipping_value in clipping_values:
+                print(f"Training {architecture} model...")
+                train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmenations, [clipping_value])
+                
+                # checkpoint_dir = os.path.join(output_dir, architecture, 'checkpoints')
+                # checkpoint = get_latest_checkpoint(checkpoint_dir)
+                
+                # print(f"Testing {architecture} model with checkpoint {checkpoint}...")
+                # test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size, clipping_values)
 
 if __name__ == '__main__':
     main()

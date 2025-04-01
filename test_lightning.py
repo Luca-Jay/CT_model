@@ -23,7 +23,7 @@ from sklearn.metrics import average_precision_score, roc_auc_score, precision_re
 from utils.visualization import viz_pr_curve, viz_confusion_matrix
 from utils.generate_residual_maps import generate_residual_maps
 
-def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size):
+def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size, clipping_values):
     pl.seed_everything(42, workers=True)
 
     # initialize output directory
@@ -39,7 +39,7 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
                          "STR": dataset_STR
                          }
 
-    train_dataset = Larynx_Data(root=data_dir, mode='train')
+    train_dataset = Larynx_Data(root=data_dir, mode='train', clipping_values = clipping_values)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
     # model
