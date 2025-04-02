@@ -18,6 +18,20 @@ class VAE_MSSSIM(VAE):
         # balance between l1 and ms-ssim
         self.rho = rho
 
+    def on_train_epoch_end(self):
+        if not self.trainer.sanity_checking:
+            # update GSVDD
+            self.sigma = self.init_sigma()
+            self.c = self.init_c()
+        if self.current_epoch % 2 == 0 and self.global_rank == 0:
+            batch = next(iter(self.trainer.train_dataloader))  # First batch only
+            originals = batch["image"].to(self.device)
+            reconstructions, _, mu, logvar = self(originals)
+            with torch.no_grad():
+                # visualize and append losses
+                viz_training(originals, reconstructions, self.current_epoch, batch["number"], self.logger.experiment)
+                
+
     ### TRAIN, VAL, TEST STEPS ###
     def training_step(self, batch, batch_idx):
         # get reconstructions, codes, residuals
@@ -29,11 +43,6 @@ class VAE_MSSSIM(VAE):
         l1 = torch.mean(residual)
         ms_ssim_loss = 1 - ms_ssim(originals, reconstructions, data_range=1, size_average=True, win_size=7)
         loss = self.rho * l1 + (1 - self.rho) * ms_ssim_loss
-
-        # update GSVDD
-        if batch_idx % int(len(self.trainer.train_dataloader) / 2) == 0 and batch_idx != 0:
-            self.sigma = self.init_sigma()
-            self.c = self.init_c()
         
         # add KL divergence
         bs, _, h, w, d = originals.shape
@@ -42,10 +51,6 @@ class VAE_MSSSIM(VAE):
         loss = loss + kl_div
 
         with torch.no_grad():
-            # visualize and append losses
-            if batch_idx < 1 and self.global_rank == 0 and self.current_epoch % 2 == 0:
-                viz_training(originals, reconstructions, self.current_epoch, batch["number"], self.logger.experiment)
-            
             self.training_losses["l1"].append(l1)
             self.training_losses["kld"].append(kl_div)
             self.training_losses["ms_ssim"].append(ms_ssim_loss)

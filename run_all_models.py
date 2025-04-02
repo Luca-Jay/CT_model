@@ -35,9 +35,9 @@ def num_gpus():
 
 def main():
     # architectures = ['AE', 'VAE', 'AE_MSSSIM', 'VAE_MSSSIM', 'AE_MSSSIM_ACAI', 'VAE_MSSSIM_ACAI', 'IGD']
-    architectures = ['VAE_MSSSIM_ACAI']
+    architectures = ['VAE_MSSSIM']
     batch_size = 16
-    epochs = 100
+    epochs = 200
     latent_size = 1024
     spatial_size = 128
     accelerator = 'gpu' if num_gpus() > 0 else 'cpu'
@@ -45,12 +45,13 @@ def main():
     dataset_dir = '/workspace/project-data/CT_model/DATA/TIGHT'
     output_dir = '/workspace/project-data/CT_model/OUTPUT/TIGHT'
     mean_map = False
+    use_augmentations = True
 
     # Number of randomized augmentations per image
     number_of_augmentations = [2]
 
     # Define spatial & intensity options
-    augmentations = [
+    augmenations = [
         RandFlipD(keys=["image"], spatial_axis=0, prob=1.0),
         RandRotateD(keys=["image"], range_x=0.1, prob=1.0),
         RandZoomD(keys=["image"], min_zoom=0.9, max_zoom=1.1, prob=1.0),
@@ -73,12 +74,15 @@ def main():
     for architecture in architectures:
         # Compose N randomized augmentation pipelines
         for N in number_of_augmentations:
-            for n in range(N):
-                intensity = intensity_aug[n]
-                augmentations.append(intensity)
+            if use_augmentations:
+                for n in range(N):
+                    intensity = intensity_aug[n]
+                    augmenations.append(intensity)
+            else:
+                augmentations = None
             for clipping_value in clipping_values:
                 print(f"Training {architecture} model...")
-                train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmentations, [clipping_value])
+                train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmenations, [clipping_value])
                 
                 # checkpoint_dir = os.path.join(output_dir, architecture, 'checkpoints')
                 # checkpoint = get_latest_checkpoint(checkpoint_dir)

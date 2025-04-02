@@ -57,13 +57,11 @@ class VAE(pl.LightningModule):
         self.sigma = checkpoint['sigma']
 
     def on_train_epoch_end(self):
-        self.c = self.init_c()
-        self.sigma = self.init_sigma()
-        if self.current_epoch % 2 == 0 and self.global_rank == 0:
+        if not self.trainer.sanity_checking:
             # update GSVDD
             self.sigma = self.init_sigma()
             self.c = self.init_c()
-
+        if self.current_epoch % 2 == 0 and self.global_rank == 0:
             batch = next(iter(self.trainer.train_dataloader))  # First batch only
             originals = batch["image"].to(self.device)
             reconstructions, _, mu, logvar = self(originals)
@@ -152,9 +150,10 @@ class VAE(pl.LightningModule):
         num_voxels = h * w * d
         kl_div = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         loss = l1 + kl_div
-
-        self.training_losses["l1"].append(l1)
-        self.training_losses["kld"].append(kl_div)
+        
+        with torch.no_grad():
+            self.training_losses["l1"].append(l1)
+            self.training_losses["kld"].append(kl_div)
 
         return loss
 
