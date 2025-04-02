@@ -17,12 +17,12 @@ class Larynx_DataModule(pl.LightningDataModule):
         self.clipping_values = clipping_values
 
     def setup(self, stage: Optional[str] = None):
-        if stage in (None, 'fit'):
+        if stage in (None, 'fit', 'validate'):
             self.dataset_train = Larynx_Data(root=self.data_dir, mode="train", spatial_size=self.spatial_size, augmentations=self.augmentations, clipping_values=self.clipping_values)
             self.dataset_val = Larynx_Data(root=self.data_dir, mode="val", spatial_size=self.spatial_size, augmentations=self.augmentations, clipping_values=self.clipping_values)
         
     def train_dataloader(self):
-        return DataLoader(self.dataset_train, shuffle=True, batch_size=self.batch_size, pin_memory=True, num_workers=8, persistent_workers=True, prefetch_factor=2)
+        return DataLoader(self.dataset_train, shuffle=True, batch_size=self.batch_size, pin_memory=True, num_workers=32, persistent_workers=True, prefetch_factor=2)
 
     def val_dataloader(self):
-        return DataLoader(self.dataset_val, shuffle=False, batch_size=self.batch_size, pin_memory=True, num_workers=8, persistent_workers=True, prefetch_factor=2)
+        return DataLoader(self.dataset_val, shuffle=False, batch_size=self.batch_size, pin_memory=True, num_workers=32, persistent_workers=True, prefetch_factor=2)

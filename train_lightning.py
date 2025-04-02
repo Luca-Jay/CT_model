@@ -52,7 +52,8 @@ def train_model(batch_size, epochs, architecture, latent_size, spatial_size, acc
     now = datetime.now().strftime("%m-%d %H:%M")
     version_name = f"{now} - BS:{batch_size}, EP: {epochs}, LS:{latent_size}, AUG: {len(augmentations)}, CV: {clipping_values}"
     train_logger = TensorBoardLogger(save_dir=root_log_dir, name="pretraining", version=version_name)
-    
+    # train_logger = TensorBoardLogger(save_dir=root_log_dir, name="pretraining")
+
     # create checkpoint callback
     checkpoint_dir = os.path.join(root_log_dir, "checkpoints") 
     checkpoint_callback = ModelCheckpoint(
@@ -67,12 +68,14 @@ def train_model(batch_size, epochs, architecture, latent_size, spatial_size, acc
                             devices=devices, 
                             logger=train_logger, 
                             fast_dev_run=False,
-                            num_sanity_val_steps=0,
+                            num_sanity_val_steps=1,
                             log_every_n_steps=20,
-                            #callbacks=[checkpoint_callback],
+                            callbacks=[checkpoint_callback],
                             max_epochs=epochs,
-                            enable_checkpointing=False
+                            #enable_checkpointing=False
                         )
+
+
     trainer.fit(model, datamodule)
 
 # entry point
@@ -80,12 +83,13 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--batch_size', default=2, type=int)
     parser.add_argument('--epochs', default=200, type=int)
-    parser.add_argument('--architecture', default='AE', choices=['AE', 'AE_MSSSIM', 'AE_MSSSIM_ACAI', 'VAE', 'VAE_MSSSIM', 'VAE_MSSSIM_ACAI', 'IGD'], type=str)
+    parser.add_argument('--architecture', default='VAE', choices=['AE', 'AE_MSSSIM', 'AE_MSSSIM_ACAI', 'VAE', 'VAE_MSSSIM', 'VAE_MSSSIM_ACAI', 'IGD'], type=str)
     parser.add_argument('--latent_size', default=512, choices=[256, 512, 1024], type=int)
     parser.add_argument('--spatial_size', default=128, choices=[64, 128], type=int)
-    parser.add_argument('--gpu', default=1, type=int)
-    parser.add_argument('--dataset_dir', default='/workspace/project-data/CT_model/DATA', type=str)
+    parser.add_argument('--accelerator', default='gpu', choices=['gpu', 'cpu'], type=str)
+    parser.add_argument('--device', default=1, type=int)
+    parser.add_argument('--dataset_dir', default='/workspace/project-data/CT_model/DATA/TIGHT', type=str)
     parser.add_argument('--output_dir', default='/workspace/project-data/CT_model/OUTPUT', type=str)
     args = parser.parse_args()
 
-    train_model(args.batch_size, args.epochs, args.architecture, args.latent_size, args.spatial_size, args.gpu, args.dataset_dir, args.output_dir)
+    train_model(args.batch_size, args.epochs, args.architecture, args.latent_size, args.spatial_size, args.accelerator, args.device, args.dataset_dir, args.output_dir)

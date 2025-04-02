@@ -35,9 +35,9 @@ def num_gpus():
 
 def main():
     # architectures = ['AE', 'VAE', 'AE_MSSSIM', 'VAE_MSSSIM', 'AE_MSSSIM_ACAI', 'VAE_MSSSIM_ACAI', 'IGD']
-    architectures = ['VAE_MSSSIM']
-    batch_size = 4
-    epochs = 20
+    architectures = ['VAE_MSSSIM_ACAI']
+    batch_size = 16
+    epochs = 100
     latent_size = 1024
     spatial_size = 128
     accelerator = 'gpu' if num_gpus() > 0 else 'cpu'
@@ -50,7 +50,7 @@ def main():
     number_of_augmentations = [2]
 
     # Define spatial & intensity options
-    augmenations = [
+    augmentations = [
         RandFlipD(keys=["image"], spatial_axis=0, prob=1.0),
         RandRotateD(keys=["image"], range_x=0.1, prob=1.0),
         RandZoomD(keys=["image"], min_zoom=0.9, max_zoom=1.1, prob=1.0),
@@ -75,10 +75,10 @@ def main():
         for N in number_of_augmentations:
             for n in range(N):
                 intensity = intensity_aug[n]
-                augmenations.append(intensity)
+                augmentations.append(intensity)
             for clipping_value in clipping_values:
                 print(f"Training {architecture} model...")
-                train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmenations, [clipping_value])
+                train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmentations, [clipping_value])
                 
                 # checkpoint_dir = os.path.join(output_dir, architecture, 'checkpoints')
                 # checkpoint = get_latest_checkpoint(checkpoint_dir)

@@ -97,7 +97,7 @@ class Larynx_Data(Dataset):
 # --------- THIS CODE CAN BE USED WHEN RAM IS TOO SMALL TO PRELOAD DATA --------------
 # class Larynx_Data(Dataset):
 
-#     def __init__(self, root, mode="train", augmentations=None, spatial_size=128):
+#     def __init__(self, root, mode="train", augmentations=None, spatial_size=128, clipping_values=(None, None)):
 #         # get the correct root paths
 #         self.mode = mode
 #         if mode == "train":
@@ -167,11 +167,9 @@ class Larynx_Data(Dataset):
 #             augmentation = self.augmentations[augmentation_type]
 #             output = augmentation(output)
         
-#         if "NORMAL" in self.image_paths[path_index]:
-#             output["label"] = 0
+#         if "_" in Path(self.image_paths[index]).name:
+#             output["number"] = int(Path(self.image_paths[index]).name.split("-")[1].split('_')[0])
 #         else:
-#             output["label"] = 1
+#             output["number"] = int(Path(self.image_paths[index]).name.split("-")[1].split('.')[0])
         
-#         # add scan number for debugging
-#         output["number"] = int(Path(self.image_paths[path_index]).name.split("-")[1].split('_')[0])
 #         return output
