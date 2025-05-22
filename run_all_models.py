@@ -35,60 +35,60 @@ def num_gpus():
 
 def main():
     # architectures = ['AE', 'VAE', 'AE_MSSSIM', 'VAE_MSSSIM', 'AE_MSSSIM_ACAI', 'VAE_MSSSIM_ACAI', 'IGD']
-    architectures = ['VAE_MSSSIM']
+    architectures = ['AE_MSSSIM_ACAI']
     batch_size = 16
-    epochs = 200
+    epochs = 100
     latent_size = 1024
     spatial_size = 128
     accelerator = 'gpu' if num_gpus() > 0 else 'cpu'
     devices = num_gpus() if num_gpus() > 0 else 1
-    dataset_dir = '/workspace/project-data/CT_model/DATA/TIGHT'
-    output_dir = '/workspace/project-data/CT_model/OUTPUT/TIGHT'
+    dataset_dir = '/workspace/project-data/CT_model/DATA/TIGHT_ALL'
+    output_dir = '/workspace/project-data/CT_model/OUTPUT/AUGMENTATION_newmethod'
     mean_map = False
     use_augmentations = True
 
-    # Number of randomized augmentations per image
-    number_of_augmentations = [2]
-
     # Define spatial & intensity options
-    augmenations = [
-        RandFlipD(keys=["image"], spatial_axis=0, prob=1.0),
-        RandRotateD(keys=["image"], range_x=0.1, prob=1.0),
-        RandZoomD(keys=["image"], min_zoom=0.9, max_zoom=1.1, prob=1.0),
-        RandAffineD(keys=["image"], rotate_range=(0.1, 0, 0), translate_range=(5, 5, 5), prob=1.0),
+    spatial = [
+        RandFlipD(keys=["image"], spatial_axis=[0], prob=1),
+        RandRotateD(keys=["image"], range_x=0.05, range_y=0.05, range_z=0.05, prob=1),
+        RandZoomD(keys=["image"], min_zoom=0.9, max_zoom=1.1, prob=1),
+        RandAffineD(keys=["image"], rotate_range=(0.5, 0.05, 0.05), translate_range=(5, 5, 5), scale_range=(0.05, 0.05, 0.05), prob=1),
     ]
 
     intensity_aug = [
-        RandShiftIntensityD(keys=["image"], offsets=0.1, prob=1.0),
-        RandScaleIntensityD(keys=["image"], factors=0.1, prob=1.0),
-        RandBiasFieldD(keys=["image"], prob=1.0),
-        RandGaussianNoiseD(keys=["image"], std=0.01, prob=1.0),
-        RandAdjustContrastD(keys=["image"], gamma=(0.9, 1.1), prob=1.0),
-        RandHistogramShiftD(keys=["image"], prob=1.0),
+        RandShiftIntensityD(keys=["image"], offsets=0.1, prob=1),               
+        RandScaleIntensityD(keys=["image"], factors=0.3, prob=1),               
+        # RandGaussianNoiseD(keys=["image"], std=0.03, prob=1),                   
+        # RandAdjustContrastD(keys=["image"], gamma=(0.7, 1.4), prob=1),          
+        # RandHistogramShiftD(keys=["image"], num_control_points=8, prob=1),      
     ]
 
-    
+    rhos = [0.05,0.10,0.25]
 
-    clipping_values = [(300 , 1500)]  # Default HU ranges for channels , (500 , 2000), (50, 400)
+    clipping_values = [(3000,50)]  # Default HU ranges for channels , (500 , 2000), (50, 400)
 
     for architecture in architectures:
-        # Compose N randomized augmentation pipelines
-        for N in number_of_augmentations:
-            if use_augmentations:
-                for n in range(N):
-                    intensity = intensity_aug[n]
-                    augmenations.append(intensity)
-            else:
-                augmentations = None
-            for clipping_value in clipping_values:
-                print(f"Training {architecture} model...")
-                train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmenations, [clipping_value])
-                
-                # checkpoint_dir = os.path.join(output_dir, architecture, 'checkpoints')
-                # checkpoint = get_latest_checkpoint(checkpoint_dir)
-                
-                # print(f"Testing {architecture} model with checkpoint {checkpoint}...")
-                # test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size, clipping_values)
+        if use_augmentations:
+            augmentations = spatial + intensity_aug
+        else:
+            augmentations = None
+        for clipping_value in clipping_values:
+            print(f"Training {architecture} model...")
+            train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmentations, [clipping_value])
+
+    # checkpoint_paths =[
+    #     "CT_model/OUTPUT/TIGHT_ALL_AUGMENTATIONS_CLEAN/AE/checkpoints/05-01 11:43 - BS:16, EP: 200, LS:1024, AUG: 9, CV: [(300, 1500)]/epoch=199.ckpt",
+    #     "CT_model/OUTPUT/TIGHT_ALL_AUGMENTATIONS_CLEAN/VAE/checkpoints/05-01 12:28 - BS:16, EP: 200, LS:1024, AUG: 9, CV: [(300, 1500)]/epoch=199.ckpt",
+    #     "CT_model/OUTPUT/TIGHT_ALL_AUGMENTATIONS_CLEAN/AE_MSSSIM/checkpoints/05-01 07:54 - BS:16, EP: 200, LS:1024, AUG: 9, CV: [(300, 1500)]/epoch=89.ckpt",
+    #     "CT_model/OUTPUT/TIGHT_ALL_AUGMENTATIONS_CLEAN/VAE_MSSSIM/checkpoints/05-01 13:12 - BS:16, EP: 200, LS:1024, AUG: 9, CV: [(300, 1500)]/epoch=199.ckpt",
+    #     "CT_model/OUTPUT/TIGHT_ALL_AUGMENTATIONS_CLEAN/AE_MSSSIM_ACAI/checkpoints/05-01 08:32 - BS:16, EP: 200, LS:1024, AUG: 9, CV: [(300, 1500)]/epoch=199.ckpt",
+    #     "CT_model/OUTPUT/TIGHT_ALL_AUGMENTATIONS_CLEAN/VAE_MSSSIM_ACAI/checkpoints/05-01 14:33 - BS:16, EP: 200, LS:1024, AUG: 9, CV: [(300, 1500)]/epoch=199.ckpt"
+    # ]
+
+    # for i in range(0,len(checkpoint_paths)):
+    #     architecture = architectures[i]
+    #     checkpoint_path = checkpoint_paths[i]
+    #     test_model(batch_size, checkpoint_path, architecture, False, dataset_dir, "cpu", 1, latent_size, clipping_values)
 
 if __name__ == '__main__':
     main()

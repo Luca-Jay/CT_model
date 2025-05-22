@@ -4,3 +4,4 @@ OUTPUT/
 test.py
 **/__pycache__/
 decedents.csv
+decedents_all.xlsx

@@ -33,6 +33,15 @@ class AE_MSSSIM_ACAI(AE_MSSSIM):
         self.lambda_fool = lambda_fool
         self.gamma = gamma
 
+    def on_train_epoch_end(self):
+        self.c = self.init_c()
+        self.sigma = self.init_sigma()
+        if self.current_epoch % 2 == 0 and self.global_rank == 0:
+            batch = next(iter(self.trainer.train_dataloader))  # First batch only
+            originals = batch["image"].to(self.device)
+            with torch.no_grad():
+                reconstructions, _ = self(originals)
+            viz_training(originals, reconstructions, self.current_epoch, batch["number"], self.logger.experiment)
 
     ### TRAIN, VAL, TEST STEPS ###
     def training_step(self, batch, batch_idx):
@@ -86,17 +95,8 @@ class AE_MSSSIM_ACAI(AE_MSSSIM):
         self.manual_backward(loss_disc)
         disc_optim.step()
         
-        # update GSVDD
-        if batch_idx % int(len(self.trainer.train_dataloader) / 2) == 0 and batch_idx != 0:
-            print("Updated GSVDD at epoch: " + str(self.current_epoch))
-            self.sigma = self.init_sigma()
-            self.c = self.init_c()
 
         with torch.no_grad():
-            # visualize and append loss
-            if batch_idx < 1 and self.global_rank == 0 and self.current_epoch % 2 == 0:
-                viz_training(originals, reconstructions, self.current_epoch, batch["number"], self.logger.experiment)
-            
             self.log("train_loss_ae", encoder_loss, batch_size=originals.shape[0])
             self.log("train_loss_disc", loss_disc, batch_size=originals.shape[0])
             self.training_losses["l1"].append(l1.detach())

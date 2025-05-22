@@ -48,9 +48,7 @@ class VAE_MSSSIM(VAE):
         bs, _, h, w, d = originals.shape
         num_voxels = h * w * d
         kl_div = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-        # ADDED: KL Annealing: slowly increase KL weight from 0 to 1 over 20 epochs
-        beta = min(1.0, self.current_epoch / 20.0) 
-        loss = loss + beta * kl_div
+        loss = loss + kl_div
 
         with torch.no_grad():
             self.training_losses["l1"].append(l1)
@@ -80,7 +78,6 @@ class VAE_MSSSIM(VAE):
         self.validation_losses["l1"].append(l1.detach())
         self.validation_losses["ms_ssim"].append(ms_ssim_loss.detach())
         self.validation_losses["kld"].append(kl_div.detach())
-        return {"val_loss": loss}
 
     def test_step(self, batch, batch_idx, dataloader_idx=0):
         # get reconstructions, codes, residuals

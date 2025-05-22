@@ -12,6 +12,12 @@ from lightning_modules.ae_msssim_acai import AE_MSSSIM_ACAI
 from lightning_modules.vae_msssim_acai import VAE_MSSSIM_ACAI
 from lightning_modules.igd import IGD
 
+from pytorch_msssim import ms_ssim
+
+from torch.nn import functional as F
+
+
+
 def load_ct_images(ct_path):
     loader = LoadImage(image_only=True)
     images = []
@@ -22,16 +28,16 @@ def load_ct_images(ct_path):
     return images
 
 def compute_residual_maps(model, images, architecture):
-    residual_maps = []
+    residuals = []
     for (image, path) in images:
         image_tensor = torch.tensor(image).unsqueeze(0).unsqueeze(0).float()  # Add batch and channel dimensions
         image_tensor = (image_tensor - image_tensor.min()) / (image_tensor.max() - image_tensor.min())
-        reconstructions = model(image_tensor.to(device='cuda'))[0].cpu()
         
-        residual = torch.abs(reconstructions - image_tensor)
-        residual = residual * 1000  # Scale residual values to range 0 to 1000
-        residual_maps.append((residual.cpu().squeeze().detach().numpy(), path))  # Remove batch and channel dimensions
-    return residual_maps
+        reconstructions = model(image_tensor)[0]
+        # loss = 1 - ms_ssim(image_tensor, reconstructions, data_range=1, size_average=True, win_size=7)
+        loss = F.l1_loss(reconstructions, image_tensor, reduction='none')
+        residuals.append((torch.mean(loss), path))  # Store loss and file path
+    return residuals
 
 def save_residual_maps(residual_maps, output_path):
     os.makedirs(output_path, exist_ok=True)
@@ -68,8 +74,9 @@ def generate_residual_maps(ct_path, output_path, checkpoint, architecture, laten
     model.eval()
     
     images = load_ct_images(ct_path)
-    residual_maps = compute_residual_maps(model, images, architecture)
-    save_residual_maps(residual_maps, output_path)
+    losses = compute_residual_maps(model, images, architecture)
+    for loss, path in losses:
+        print(f"File: {path}, MS-SSIM Error: {loss}")
 
 if __name__ == "__main__":
     # import argparse
@@ -80,9 +87,9 @@ if __name__ == "__main__":
     # args = parser.parse_args()
 
     # Hardcoded arguments
-    ct_path = "Interview data/"
-    output_path = "Interview data/"
-    checkpoint = "/workspace/project-data/CT_model/OUTPUT/TIGHT_ALL_AUGMENTATIONS_NEW/AE_MSSSIM_ACAI/checkpoints/05-01 08:32 - BS:16, EP: 200, LS:1024, AUG: 9, CV: [(300, 1500)]/epoch=199.ckpt"
+    ct_path = "/workspace/project-data/CT_model/DATA/TIGHT/TEST/NORMAL"
+    output_path = "/workspace/project-data/CT_model/OUTPUT/RESIDUALS/"
+    checkpoint = "/workspace/project-data/CT_model/OUTPUT/TIGHT/AE_MSSSIM_ACAI/checkpoints/04-03 20:38 - BS:16, EP: 200, LS:1024, AUG: 8, CV: [(300, 1500)]/epoch=159.ckpt"
     architecture = "AE_MSSSIM_ACAI"
     latent_size=  1024
     

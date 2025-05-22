@@ -19,7 +19,7 @@ def compute_residual_maps(model, images):
     residual_maps = []
     for image in images:
         image_tensor = torch.tensor(image).unsqueeze(0).unsqueeze(0).float()  # Add batch and channel dimensions
-        reconstructions, _ = model(image_tensor)
+        reconstructions, _ = model(image_tensor.)
         residual = torch.abs(reconstructions - image_tensor)
         residual = residual * 1000  # Scale residual values to range 0 to 1000
         residual_maps.append(residual.squeeze().detach().numpy())  # Remove batch and channel dimensions
@@ -31,8 +31,8 @@ def save_residual_maps(residual_maps, output_path):
         nifti_img = nib.Nifti1Image(residual, np.eye(4))
         nib.save(nifti_img, os.path.join(output_path, f'residual_map_{i}.nii.gz'))
 
-def generate_residual_maps(ct_path, output_path, model_path):
-    model = AE.load_from_checkpoint(model_path, latent_size=512)  # Load your trained model
+def generate_residual_maps(ct_path, output_path, model_path, latent_size):
+    model = AE.load_from_checkpoint(model_path, latent_size=latent_size)  # Load your trained model
     model.eval()
     
     images = load_ct_images(ct_path)

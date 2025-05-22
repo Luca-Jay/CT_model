@@ -179,7 +179,7 @@ class VAE(pl.LightningModule):
         self.validation_losses["kld"].append(kl_div)
 
 
-    def test_step(self, batch, batch_idx, dataset_idx):
+    def test_step(self, batch, batch_idx, dataloader_idx):
         # get reconstructions, codes, residuals
         originals = batch["image"]
         labels = batch["label"]
@@ -206,10 +206,10 @@ class VAE(pl.LightningModule):
             # visualize if necessary
             if self.visualize_testing:
                 # discriminate dataset
-                if dataset_idx == 0:
-                    input_type = 'Healthy'
+                if dataloader_idx == 0:
+                    input_type = 'Normal'
                 else:
-                    input_type = 'Unhealthy'
+                    input_type = 'Abnormal'
                 
                 viz_testing(originals[visual_index], reconstructions[visual_index], residual, input_type, batch['number'][visual_index],
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)
@@ -217,7 +217,7 @@ class VAE(pl.LightningModule):
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)
                 # Call heatmap visualization functions
                 viz_residual_heatmap(originals[visual_index], residual, batch['number'][visual_index], self.logger.experiment)
-                viz_residual_heatmap_gif(originals[visual_index], residual, batch['number'][visual_index], self.logger.experiment)
+                #viz_residual_heatmap_gif(originals[visual_index], residual, batch['number'][visual_index], self.logger.experiment)
     ### END OF LIGHTNING STEPS ###
     
 

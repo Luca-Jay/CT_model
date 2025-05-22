@@ -2,9 +2,11 @@ import os
 from pathlib import Path
 from utils.utils import window
 from torch.utils.data import Dataset
-from monai.transforms import IdentityD, Compose, ResizeD, ScaleIntensityD, LoadImageD, EnsureChannelFirstd, RandFlipD, RandRotate
+from monai.transforms import IdentityD, Compose, ResizeD, ScaleIntensityD, LoadImageD, EnsureChannelFirstd, RandFlipD, RandRotate, SomeOf, OneOf
 import numpy as np
 import nibabel as nib
+
+import copy
 
 import time
 
@@ -27,6 +29,8 @@ class Larynx_Data(Dataset):
             folder = os.path.join("TEST", "STRANGULATION")
         elif mode == "test-hemorrhage":
             folder = os.path.join("TEST", "HEMORRHAGE")
+        elif mode == "test-hanging":
+            folder = os.path.join("TEST", "HANGING")
         elif mode == "test-synthetic10":
             folder = os.path.join("TEST", "CUBE10")
         elif mode == "test-synthetic15":
@@ -46,8 +50,18 @@ class Larynx_Data(Dataset):
         
         # save the augmentation functions, with identity in position 0
         self.augmentations = []
-        if augmentations is not None:
-            self.augmentations.extend(augmentations)
+        if augmentations:
+            self.augmentations = list(augmentations)
+            self.aug_sampler = OneOf([
+                                        IdentityD(keys=["image"]),                                 # acts as “no augmentation” 
+                                        SomeOf(
+                                            transforms=augmentations,
+                                            num_transforms=(1, 3),                                 # uniform between 1 and 3  
+                                            replace=False),
+                                    ],
+                                    weights=[0.8, 0.2])                                            # 50 % / 50 % split 
+        else:
+            self.aug_sampler = None
 
         # data multiplies with the number of augmentation functions
         self.data_multiplier = len(self.augmentations)  
@@ -73,6 +87,10 @@ class Larynx_Data(Dataset):
             stacked_img = np.stack(channels, axis=0)  # Stack channels
             data = {"image": stacked_img}
             data = self.resizing(data)
+
+            if self.mode == "train" and self.aug_sampler is not None:
+                data = self.aug_sampler(data)
+
             if "NORMAL" in path or "TRAIN" in path:
                 data["label"] = 0
             else:
@@ -85,11 +103,7 @@ class Larynx_Data(Dataset):
                 data["number"] = int(Path(path).name.split("-")[1].split('.')[0])
 
             self.images.append(data)
-            if mode == 'train':
-                for aug in self.augmentations:
-                    self.image_paths.append(path)
-                    augmented = aug(data)
-                    self.images.append(augmented)
+            
 
     def __len__(self):
         return len(self.images)
@@ -100,20 +114,9 @@ class Larynx_Data(Dataset):
 
     def __getitem__(self, index):
         # load the image and label
-        image = self.images[index]
-        
-        # if "NORMAL" in self.image_paths[index] or "TRAIN" in self.image_paths[index]:
-        #     output["label"] = 0
-        # else:
-        #     output["label"] = 1
-        
-        # # add scan number for debugging
-        # if "_" in Path(self.image_paths[index]).name:
-        #     output["number"] = int(Path(self.image_paths[index]).name.split("-")[1].split('_')[0])
-        # else:
-        #     output["number"] = int(Path(self.image_paths[index]).name.split("-")[1].split('.')[0])
+        sample = self.images[index]
 
-        return image
+        return sample
 
 # # --------- THIS CODE CAN BE USED WHEN RAM IS TOO SMALL TO PRELOAD DATA --------------
 # class Larynx_Data(Dataset):

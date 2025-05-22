@@ -13,14 +13,14 @@ from lightning_modules.ae_msssim import AE_MSSSIM
 from lightning_modules.vae_msssim import VAE_MSSSIM
 from datetime import datetime
 
-def train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmentations=None, clipping_values=None):
+def train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmentations=None, clipping_values=None, rho=0.15):
     pl.seed_everything(42, workers=True)
 
     # data
     dataset_root = dataset_dir
     datamodule = Larynx_DataModule(data_dir=dataset_root, batch_size=batch_size, spatial_size=spatial_size, augmentations=augmentations, clipping_values=clipping_values)
 
-    rho = 0.15
+    # rho = 0.15
     lambda_fool = 0.1
     gamma = 0.2
     # build the model
@@ -50,17 +50,16 @@ def train_model(batch_size, epochs, architecture, latent_size, spatial_size, acc
     experiment_name = architecture
     root_log_dir = os.path.join(output_dir, experiment_name)
     now = datetime.now().strftime("%m-%d %H:%M")
-    version_name = f"{now} - BS:{batch_size}, EP: {epochs}, LS:{latent_size}, AUG: {len(augmentations)}, CV: {clipping_values}"
+    version_name = f"{now} - BS:{batch_size}, EP: {epochs}, LS:{latent_size}, AUG: {len(augmentations) if augmentations else 0}, CV: {clipping_values}, rho: {rho}"
     train_logger = TensorBoardLogger(save_dir=root_log_dir, name="pretraining", version=version_name)
-    # train_logger = TensorBoardLogger(save_dir=root_log_dir, name="pretraining")
 
     # create checkpoint callback
-    checkpoint_dir = os.path.join(root_log_dir, "checkpoints") 
+    checkpoint_dir = os.path.join(root_log_dir, "checkpoints", version_name) 
     checkpoint_callback = ModelCheckpoint(
         dirpath=checkpoint_dir,
         filename="{epoch:02d}",
         save_last=False,
-        every_n_epochs=20
+        every_n_epochs=10,
     )
     
     # create trainer object
@@ -83,13 +82,14 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--batch_size', default=2, type=int)
     parser.add_argument('--epochs', default=200, type=int)
-    parser.add_argument('--architecture', default='VAE', choices=['AE', 'AE_MSSSIM', 'AE_MSSSIM_ACAI', 'VAE', 'VAE_MSSSIM', 'VAE_MSSSIM_ACAI', 'IGD'], type=str)
-    parser.add_argument('--latent_size', default=512, choices=[256, 512, 1024], type=int)
+    parser.add_argument('--architecture', default='AE_MSSSIM_ACAI', choices=['AE', 'AE_MSSSIM', 'AE_MSSSIM_ACAI', 'VAE', 'VAE_MSSSIM', 'VAE_MSSSIM_ACAI', 'IGD'], type=str)
+    parser.add_argument('--latent_size', default=1024, choices=[256, 512, 1024, 2048], type=int)
     parser.add_argument('--spatial_size', default=128, choices=[64, 128], type=int)
     parser.add_argument('--accelerator', default='gpu', choices=['gpu', 'cpu'], type=str)
     parser.add_argument('--device', default=1, type=int)
-    parser.add_argument('--dataset_dir', default='/workspace/project-data/CT_model/DATA/TIGHT', type=str)
-    parser.add_argument('--output_dir', default='/workspace/project-data/CT_model/OUTPUT', type=str)
+    parser.add_argument('--dataset_dir', default='/workspace/project-data/CT_model/DATA/TIGHT_ALL_HANGING', type=str)
+    parser.add_argument('--output_dir', default='/workspace/project-data/CT_model/OUTPUT/HANGING', type=str)
+    parser.add_argument('--rho', default=0.15, type=int)
     args = parser.parse_args()
 
-    train_model(args.batch_size, args.epochs, args.architecture, args.latent_size, args.spatial_size, args.accelerator, args.device, args.dataset_dir, args.output_dir)
+    train_model(args.batch_size, args.epochs, args.architecture, args.latent_size, args.spatial_size, args.accelerator, args.device, args.dataset_dir, args.output_dir, args.rho)

@@ -21,7 +21,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from utils.utils import get_best_threshold, Collector
 from sklearn.metrics import average_precision_score, roc_auc_score, precision_recall_curve, confusion_matrix
 from utils.visualization import viz_pr_curve, viz_confusion_matrix
-from utils.generate_residual_maps import generate_residual_maps
+#from utils.generate_residual_maps import generate_residual_maps
 
 def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size, clipping_values):
     pl.seed_everything(42, workers=True)
@@ -34,10 +34,14 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
     data_dir = dataset_dir
     dataset_normal = Larynx_Data(root=data_dir, mode="test-normal")
     dataset_STR = Larynx_Data(root=data_dir, mode="test-strangulation")
-    dataset_SYN = Larynx_Data(root=data_dir, mode="test-synthetic")
-    abnormal_datasets = {"SYN": dataset_SYN, 
-                         "STR": dataset_STR
-                         }
+    dataset_HNG = Larynx_Data(root=data_dir, mode="test-hanging")  
+    # dataset_SYN15 = Larynx_Data(root=data_dir, mode="test-synthetic15")
+    # dataset_SYN10 = Larynx_Data(root=data_dir, mode="test-synthetic10")
+    # dataset_SYN30 = Larynx_Data(root=data_dir, mode="test-synthetic30")
+    dataset_ASP = Larynx_Data(root=data_dir, mode="test-asphyxia")
+    # abnormal_datasets = {"SYN10": dataset_SYN10, "SYN15": dataset_SYN15, "SYN30": dataset_SYN30, "STR": dataset_STR}
+    abnormal_datasets = {"STR": dataset_STR, "HNG": dataset_HNG}
+
 
     train_dataset = Larynx_Data(root=data_dir, mode='train', clipping_values = clipping_values)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
@@ -160,17 +164,18 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
                                                     average_precision_score(targets.cpu().numpy(), combined_preds.cpu().numpy())])  
         
         # append first the average scores for healthy samples
-        if disease == 'SYN':
+        if disease == 'STR':
             for i in range(rec_preds[targets==0].shape[0]):
-                average_scores.append(["NORMAL", architecture, rec_preds[targets==0][i].item(),
+                average_scores.append(["NORMAL", architecture, dataset_normal.get_case_numbers()[i], rec_preds[targets==0][i].item(),
                                                                     feat_preds[targets==0][i].item(),
                                                                     combined_preds[targets==0][i].item()])  
         
         # append average scores for unhealthy
         for i in range(rec_preds[targets==1].shape[0]):
-            average_scores.append([disease, architecture, rec_preds[targets==1][i].item(),
+            average_scores.append([disease, architecture, dataset.get_case_numbers()[i], rec_preds[targets==1][i].item(),
                                                             feat_preds[targets==1][i].item(),
                                                             combined_preds[targets==1][i].item()])
+
         
 
         ##########################
@@ -199,7 +204,7 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
     metrics_df.to_excel(output_dir / output_filename, float_format="%.4f")  
 
     # accumulate average scores in DataFrame and save it
-    avg_score_df = pd.DataFrame(average_scores, columns=['Abnormality', 'Method', 'I score', 'F score', 'C score'])
+    avg_score_df = pd.DataFrame(average_scores, columns=['Abnormality', 'Method', 'Case number', 'I score', 'F score', 'C score'])
     ax = sns.violinplot(x='I score', y='Abnormality', data=avg_score_df, density_norm='width', palette='Set3')
     ax.set(xlim=(0.01, 0.12))
     logger.experiment.add_figure(tag='Violin for I score NEW, width', figure=ax.get_figure())
@@ -208,7 +213,7 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
     ax = sns.violinplot(x='C score', y='Abnormality', data=avg_score_df, density_norm='count')
     logger.experiment.add_figure(tag='Violin for C score, count', figure=ax.get_figure())
 
-    generate_residual_maps(data_dir, os.path.join(output_dir, "RESIDUALS"), checkpoint)
+    #generate_residual_maps(data_dir, os.path.join(output_dir, "RESIDUALS"), checkpoint, latent_size)
 
     # get output filename for metrics xlsx
     output_filename = architecture + "-average_scores.xlsx"
@@ -218,13 +223,15 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
 
 if __name__ == '__main__':
     # Hardcoded arguments for testing
-    batch_size = 8
-    checkpoint = '/workspace/project-data/CT_model/OUTPUT/AE/checkpoints/epoch=19-v1.ckpt'
-    architecture = 'AE'
+    batch_size = 16
+    checkpoint = 'CT_model/OUTPUT/TIGHT_ALL_AUGMENTATIONS_CLEAN/VAE_MSSSIM_ACAI/checkpoints/05-09 07:09 - BS:16, EP: 200, LS:1024, AUG: 9, CV: [(300, 1500)]/epoch=199.ckpt'
+    architecture = 'VAE_MSSSIM_ACAI'
     mean_map = False
     accelerator = 'cpu'
     devices = 1
-    dataset_dir = '/workspace/project-data/CT_model/DATA'
+    dataset_dir = '/workspace/project-data/CT_model/DATA/TIGHT_ALL'
     latent_size = 1024
 
-    test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size)
+    clipping_values = [(300 , 1500)]
+
+    test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, accelerator, devices, latent_size, clipping_values)

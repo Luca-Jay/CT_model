@@ -6,7 +6,7 @@ from utils.utils import log_average
 from pytorch_msssim import ms_ssim
 
 
-class AE_MSSSIM(AE):
+class  AE_MSSSIM(AE):
 
     def __init__(self, latent_size, rho):
         super().__init__(latent_size)
@@ -17,6 +17,16 @@ class AE_MSSSIM(AE):
 
         # balance between l1 and ms-ssim
         self.rho = rho
+
+    def on_train_epoch_end(self):
+        self.c = self.init_c()
+        self.sigma = self.init_sigma()
+        if self.current_epoch % 2 == 0 and self.global_rank == 0:
+            batch = next(iter(self.trainer.train_dataloader))  # First batch only
+            originals = batch["image"].to(self.device)
+            with torch.no_grad():
+                reconstructions, _ = self(originals)
+            viz_training(originals, reconstructions, self.current_epoch, batch["number"], self.logger.experiment)
 
 
     ### TRAIN, VAL, TEST STEPS ###
@@ -31,15 +41,8 @@ class AE_MSSSIM(AE):
         ms_ssim_loss = 1 - ms_ssim(originals, reconstructions, data_range=1, size_average=True, win_size=7)
         loss = self.rho * l1 + (1 - self.rho) * ms_ssim_loss
 
-        # update GSVDD
-        if batch_idx % int(len(self.trainer.train_dataloader) / 2) == 0 and batch_idx != 0:
-            self.sigma = self.init_sigma()
-            self.c = self.init_c()
-        
         # visualization
         with torch.no_grad():
-            if batch_idx % 30 == 0 and self.global_rank == 0 and self.current_epoch % 10 == 0:
-                viz_training(originals, reconstructions, self.current_epoch, batch["number"], self.logger.experiment)
             self.training_losses["l1"].append(l1)
             self.training_losses["ms_ssim"].append(ms_ssim_loss)
         return loss
@@ -60,7 +63,7 @@ class AE_MSSSIM(AE):
         self.validation_losses["ms_ssim"].append(ms_ssim_loss)
 
 
-    def test_step(self, batch, batch_idx, dataset_idx):
+    def test_step(self, batch, batch_idx, dataloader_idx):
         # get reconstructions, codes, residuals
         originals = batch["image"]
         labels = batch["label"]
@@ -89,10 +92,10 @@ class AE_MSSSIM(AE):
             # visualize if necessary
             if self.visualize_testing:
                 # discriminate dataset
-                if dataset_idx == 0:
-                    input_type = 'Healthy'
+                if dataloader_idx == 0:
+                    input_type = 'Normal'
                 else:
-                    input_type = 'Unhealthy'
+                    input_type = 'Abnormal'
                 
                 viz_testing(originals[visual_index], reconstructions[visual_index], residual, input_type, batch['number'][visual_index],
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)
