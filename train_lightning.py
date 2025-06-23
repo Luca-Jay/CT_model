@@ -13,6 +13,21 @@ from lightning_modules.ae_msssim import AE_MSSSIM
 from lightning_modules.vae_msssim import VAE_MSSSIM
 from datetime import datetime
 
+from monai.transforms import (
+    Compose,
+    RandFlipD,
+    RandRotateD,
+    RandZoomD,
+    RandAffineD,
+    RandBiasFieldD,
+    RandShiftIntensityD,
+    RandScaleIntensityD,
+    RandGaussianNoiseD,
+    RandAdjustContrastD,
+    RandHistogramShiftD,
+    IdentityD,
+)
+
 def train_model(batch_size, epochs, architecture, latent_size, spatial_size, accelerator, devices, dataset_dir, output_dir, augmentations=None, clipping_values=None, rho=0.15):
     pl.seed_everything(42, workers=True)
 

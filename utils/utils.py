@@ -66,7 +66,6 @@ class Collector:
 def norm22(x: torch.Tensor):
     return torch.sum(torch.pow(x, 2))
 
-# This is a MONAI library function that I had to readapt to include dilation
 def calculate_out_shape(
     in_shape: Union[Sequence[int], int, np.ndarray],
     kernel_size: Union[Sequence[int], int],

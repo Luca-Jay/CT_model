@@ -224,12 +224,12 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
 if __name__ == '__main__':
     # Hardcoded arguments for testing
     batch_size = 16
-    checkpoint = 'CT_model/OUTPUT/TIGHT_ALL_AUGMENTATIONS_CLEAN/AE_MSSSIM/checkpoints/05-01 07:54 - BS:16, EP: 200, LS:1024, AUG: 9, CV: [(300, 1500)]/epoch=89.ckpt'
+    checkpoint = 'AE_MSSSIM/checkpoints/epoch=89.ckpt'
     architecture = 'AE_MSSSIM'
     mean_map = False
     accelerator = 'cpu'
     devices = 1
-    dataset_dir = '/workspace/project-data/CT_model/DATA/TIGHT_ALL'
+    dataset_dir = 'DATA/'
     latent_size = 1024
 
     clipping_values = [(300 , 1500)]
