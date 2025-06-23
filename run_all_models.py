@@ -36,7 +36,7 @@ def num_gpus():
 def main():
     # architectures = ['AE', 'VAE', 'AE_MSSSIM', 'VAE_MSSSIM', 'AE_MSSSIM_ACAI', 'VAE_MSSSIM_ACAI', 'IGD']
     architectures = ['AE_MSSSIM_ACAI']
-    batch_size = 16
+    batch_size = 8
     epochs = 100
     latent_size = 1024
     spatial_size = 128
@@ -50,7 +50,7 @@ def main():
     # Define spatial & intensity options
     spatial = [
         RandFlipD(keys=["image"], spatial_axis=[0], prob=1),
-        RandRotateD(keys=["image"], range_x=0.05, range_y=0.05, range_z=0.05, prob=1),
+        #RandRotateD(keys=["image"], range_x=0.05, range_y=0.05, range_z=0.05, prob=1),
         RandZoomD(keys=["image"], min_zoom=0.9, max_zoom=1.1, prob=1),
         RandAffineD(keys=["image"], rotate_range=(0.5, 0.05, 0.05), translate_range=(5, 5, 5), scale_range=(0.05, 0.05, 0.05), prob=1),
     ]
@@ -65,11 +65,11 @@ def main():
 
     rhos = [0.05,0.10,0.25]
 
-    clipping_values = [(3000,50)]  # Default HU ranges for channels , (500 , 2000), (50, 400)
+    clipping_values = [(300, 1500)]  # Default HU ranges for channels , (500 , 2000), (50, 400)
 
     for architecture in architectures:
         if use_augmentations:
-            augmentations = spatial + intensity_aug
+            augmentations = spatial
         else:
             augmentations = None
         for clipping_value in clipping_values:

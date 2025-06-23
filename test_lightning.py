@@ -224,8 +224,8 @@ def test_model(batch_size, checkpoint, architecture, mean_map, dataset_dir, acce
 if __name__ == '__main__':
     # Hardcoded arguments for testing
     batch_size = 16
-    checkpoint = 'CT_model/OUTPUT/TIGHT_ALL_AUGMENTATIONS_CLEAN/VAE_MSSSIM_ACAI/checkpoints/05-09 07:09 - BS:16, EP: 200, LS:1024, AUG: 9, CV: [(300, 1500)]/epoch=199.ckpt'
-    architecture = 'VAE_MSSSIM_ACAI'
+    checkpoint = 'CT_model/OUTPUT/TIGHT_ALL_AUGMENTATIONS_CLEAN/AE_MSSSIM/checkpoints/05-01 07:54 - BS:16, EP: 200, LS:1024, AUG: 9, CV: [(300, 1500)]/epoch=89.ckpt'
+    architecture = 'AE_MSSSIM'
     mean_map = False
     accelerator = 'cpu'
     devices = 1

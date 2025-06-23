@@ -1,7 +1,7 @@
 import torch.nn.functional as F
 import torch
 from lightning_modules.ae import AE
-from utils.visualization import viz_training, viz_testing_gif, viz_testing
+from utils.visualization import viz_training, viz_testing_gif, viz_testing, viz_residual_heatmap
 from utils.utils import log_average
 from pytorch_msssim import ms_ssim
 
@@ -101,6 +101,7 @@ class  AE_MSSSIM(AE):
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)
                 viz_testing_gif(residual, input_type + ' residual', batch["number"][visual_index], 
                                 rec_score, feat_score, self.thr_rec, self.thr_feat, labels[visual_index], self.logger.experiment)
+                viz_residual_heatmap(originals[visual_index], residual, batch['number'][visual_index], self.logger.experiment)
     ### END OF LIGHTNING STEPS ###
 
     ### LOGGING ###

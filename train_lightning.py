@@ -92,4 +92,20 @@ if __name__ == '__main__':
     parser.add_argument('--rho', default=0.15, type=int)
     args = parser.parse_args()
 
-    train_model(args.batch_size, args.epochs, args.architecture, args.latent_size, args.spatial_size, args.accelerator, args.device, args.dataset_dir, args.output_dir, args.rho)
+    # Define spatial & intensity options
+    spatial = [
+        RandFlipD(keys=["image"], spatial_axis=[0], prob=1),
+        #RandRotateD(keys=["image"], range_x=0.05, range_y=0.05, range_z=0.05, prob=1),
+        RandZoomD(keys=["image"], min_zoom=0.9, max_zoom=1.1, prob=1),
+        RandAffineD(keys=["image"], rotate_range=(0.5, 0.05, 0.05), translate_range=(5, 5, 5), scale_range=(0.05, 0.05, 0.05), prob=1),
+    ]
+
+    intensity_aug = [
+        RandShiftIntensityD(keys=["image"], offsets=0.1, prob=1),               
+        RandScaleIntensityD(keys=["image"], factors=0.3, prob=1),               
+        # RandGaussianNoiseD(keys=["image"], std=0.03, prob=1),                   
+        # RandAdjustContrastD(keys=["image"], gamma=(0.7, 1.4), prob=1),          
+        # RandHistogramShiftD(keys=["image"], num_control_points=8, prob=1),      
+    ]
+
+    train_model(args.batch_size, args.epochs, args.architecture, args.latent_size, args.spatial_size, args.accelerator, args.device, args.dataset_dir, args.output_dir, spatial+intensity_aug, [(3000, 50)], args.rho)
